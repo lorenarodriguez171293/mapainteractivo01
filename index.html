@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa Energético Interactivo</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    body { margin:0; font-family: Arial; }
+    #map { width: 100%; height: 100vh; }
+
+    .panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,.3);
+      z-index: 999;
+    }
+
+    .ficha {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 300px;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,.3);
+      z-index: 999;
+      display: none;
+    }
+    .ficha h3 { margin-top:0; }
+  </style>
+</head>
+<body>
+
+<div class="panel">
+  <strong>Filtros:</strong><br>
+  <label><input type="checkbox" class="filtro" value="eolico" checked> 🌀 Eólicos</label><br>
+  <label><input type="checkbox" class="filtro" value="solar" checked> ☀️ Solares</label><br>
+  <label><input type="checkbox" class="filtro" value="hidraulica" checked> 💧 Hidráulicas</label><br>
+  <label><input type="checkbox" class="filtro" value="nuclear" checked> ⚛️ Nucleares</label><br>
+  <label><input type="checkbox" class="filtro" value="biomasa" checked> 🌱 Biomasa</label><br>
+</div>
+
+<div class="ficha" id="ficha"></div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const map = L.map("map").setView([-38, -64], 4);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap",
+}).addTo(map);
+
+// --- ICONOS ---
+const iconos = {
+  eolico: "🌀",
+  solar: "☀️",
+  hidraulica: "💧",
+  nuclear: "⚛️",
+  biomasa: "🌱",
+};
+
+// --- DATOS REALES ---
+const plantas = [
+  // === NUCLEARES ===
+  {
+    tipo: "nuclear",
+    nombre: "Atucha I",
+    lat: -34.0611,
+    lon: -59.0833,
+    potencia: "362 MW",
+    ano: "1974",
+    desc: "Primera central nuclear de América Latina.",
+    fuente: "Nucleoeléctrica Argentina",
+  },
+  {
+    tipo: "nuclear",
+    nombre: "Atucha II / Néstor Kirchner",
+    lat: -34.0644,
+    lon: -59.0844,
+    potencia: "745 MW",
+    ano: "2014",
+    desc: "Segunda central nuclear Argentina, tipo PHWR.",
+    fuente: "Nucleoeléctrica Argentina",
+  },
+  {
+    tipo: "nuclear",
+    nombre: "Embalse",
+    lat: -32.2,
+    lon: -64.44,
+    potencia: "656 MW",
+    ano: "1984",
+    desc: "Central nuclear tipo CANDU en Córdoba.",
+    fuente: "NA-SA",
+  },
+
+  // === HIDROELÉCTRICAS ===
+  {
+    tipo: "hidraulica",
+    nombre: "Yacyretá",
+    lat: -27.37,
+    lon: -56.63,
+    potencia: "3100 MW",
+    ano: "1994",
+    desc: "Central hidroeléctrica binacional Argentina–Paraguay.",
+    fuente: "EBY",
+  },
+  {
+    tipo: "hidraulica",
+    nombre: "Salto Grande",
+    lat: -31.39,
+    lon: -58.02,
+    potencia: "1890 MW",
+    ano: "1979",
+    desc: "Central hidroeléctrica binacional Argentina–Uruguay.",
+    fuente: "CTM Salto Grande",
+  },
+
+  // === SOLAR ===
+  {
+    tipo: "solar",
+    nombre: "Parque Solar Cauchari",
+    lat: -23.5,
+    lon: -66.5,
+    potencia: "300 MW",
+    ano: "2019",
+    desc: "Uno de los parques solares más grandes de Sudamérica.",
+    fuente: "Gob. Jujuy",
+  },
+
+  // === EÓLICOS (reales) ===
+  {
+    tipo: "eolico",
+    nombre: "Parque Eólico Rawson",
+    lat: -43.3,
+    lon: -65.1,
+    potencia: "108 MW",
+    ano: "2012",
+    desc: "Uno de los primeros parques eólicos de gran escala en Chubut.",
+    fuente: "GENNEIA",
+  },
+  {
+    tipo: "eolico",
+    nombre: "Parque Eólico Vientos del Secano",
+    lat: -38.3,
+    lon: -60.3,
+    potencia: "100 MW",
+    ano: "2020",
+    desc: "Ubicado en el sur de la provincia de Buenos Aires.",
+    fuente: "Genneia",
+  },
+
+  // === BIOMASA ===
+  {
+    tipo: "biomasa",
+    nombre: "Planta de Biomasa Santa Fe – Sorrento",
+    lat: -32.9,
+    lon: -60.7,
+    potencia: "7 MW",
+    ano: "2018",
+    desc: "Central térmica que utiliza biomasa forestal.",
+    fuente: "CAMMESA",
+  },
+];
+
+// --- CREAR CAPA DE MARCADORES ---
+let marcadores = [];
+
+function cargarMarcadores() {
+  marcadores.forEach(m => map.removeLayer(m));
+  marcadores = [];
+
+  const filtrosActivos = Array.from(document.querySelectorAll(".filtro:checked")).map(x => x.value);
+
+  plantas.forEach(p => {
+    if (!filtrosActivos.includes(p.tipo)) return;
+
+    const marker = L.marker([p.lat, p.lon], {
+      icon: L.divIcon({
+        html: `<div style="font-size:26px">${iconos[p.tipo]}</div>`,
+        className: "",
+      }),
+    })
+    .addTo(map)
+    .on("click", () => mostrarFicha(p));
+
+    marcadores.push(marker);
+  });
+}
+
+cargarMarcadores();
+
+// --- Filtros ---
+document.querySelectorAll(".filtro").forEach(chk => {
+  chk.addEventListener("change", cargarMarcadores);
+});
+
+// --- FICHA INFORMATIVA ---
+function mostrarFicha(p) {
+  const box = document.getElementById("ficha");
+  box.style.display = "block";
+  box.innerHTML = `
+    <h3>${iconos[p.tipo]} ${p.nombre}</h3>
+    <p><strong>Tipo:</strong> ${p.tipo}</p>
+    <p><strong>Potencia:</strong> ${p.potencia}</p>
+    <p><strong>Año de inauguración:</strong> ${p.ano}</p>
+    <p><strong>Descripción:</strong><br>${p.desc}</p>
+    <p><small><strong>Fuente:</strong> ${p.fuente}</small></p>
+    <button onclick="document.getElementById('ficha').style.display='none'">
+      Cerrar
+    </button>
+  `;
+}
+</script>
+
+</body>
+</html>
