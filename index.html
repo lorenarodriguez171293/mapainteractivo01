@@ -73,15 +73,17 @@
   /* 🔥 MODO CELULAR */
   @media (max-width:900px){
     #map {
-      right:0;                /* El mapa ocupa todo el ancho */
-      top:90px;               /* Más espacio para que entren filtros */
+      right:0;
+      top:90px;
     }
 
     header {
-      right:0;                /* Ya no deja espacio para panel */
+      right:0;
       height:auto;
       padding:10px;
-      flex-wrap: wrap;        /* Filtros en varias líneas */
+      flex-wrap: wrap;
+      overflow-x:auto;
+      white-space: nowrap;
     }
 
     .panel {
@@ -90,12 +92,22 @@
       top:auto;
       right:0;
       width:100%;
-      height:40%;             /* Ficha ocupa parte inferior */
+      height:40%;
       border-left:none;
       border-top:2px solid #ddd;
       background:white;
+
+      /* 🔥 Ajustes nuevos */
+      padding-left:20px !important;   /* Corre el listado y la ficha hacia la derecha */
+      padding-right:20px !important;  /* Para que no quede pegado al borde */
+      overflow-y:auto;
     }
-  }
+
+    /* Opcional: mejora en pantallas muy chicas */
+    .card, #listado, #ficha {
+      padding-left:5px;   /* Más margen interno */
+    }
+}
 
   /* Opcional: mejora para pantallas muy chicas (<480px) */
   @media (max-width:480px){
