@@ -8,22 +8,102 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <style>
-    body { margin:0; font-family: Arial, sans-serif; }
-    #map { position: absolute; top:56px; bottom:0; left:0; right:320px; }
-    header { position: absolute; top:0; left:0; right:320px; height:56px; background:#0b5; display:flex; align-items:center; gap:1rem; padding:0 12px; box-shadow:0 2px 4px rgba(0,0,0,.15); z-index:1000; }
-    .controls { display:flex; gap:.5rem; align-items:center; }
-    .panel { position: absolute; top:0; right:0; width:320px; bottom:0; background:#fff; border-left:1px solid #ddd; overflow:auto; padding:12px; z-index:1000; }
-    .card { border:1px solid #e5e5e5; padding:8px; margin-bottom:8px; border-radius:6px; background:#fbfbfb; }
-    .tag { display:inline-block; padding:2px 8px; border-radius:999px; background:#eee; font-size:12px; margin-right:6px; }
-    .info-row { display:flex; justify-content:space-between; font-size:14px; margin:4px 0; }
-    button { cursor:pointer; }
-    @media (max-width:900px){
-      #map { right:0; }
-      header { right:0; }
-      .panel { position:relative; width:100%; height:auto; border-left:none; border-top:1px solid #ddd; }
+ <style>
+  body { margin:0; font-family: Arial, sans-serif; }
+  #map { position: absolute; top:56px; bottom:0; left:0; right:320px; }
+
+  header {
+    position: absolute;
+    top:0; left:0; right:320px;
+    height:56px;
+    background:#0b5;
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    padding:0 12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.15);
+    z-index:1000;
+    overflow-x: auto;     /* Esto permite deslizar filtros en celular */
+    white-space: nowrap;
+  }
+
+  .controls {
+    display:flex;
+    gap:.5rem;
+    align-items:center;
+  }
+
+  .panel {
+    position: absolute;
+    top:0; right:0;
+    width:320px; bottom:0;
+    background:#fff;
+    border-left:1px solid #ddd;
+    overflow:auto;
+    padding:12px;
+    z-index:1000;
+  }
+
+  .card {
+    border:1px solid #e5e5e5;
+    padding:8px;
+    margin-bottom:8px;
+    border-radius:6px;
+    background:#fbfbfb;
+  }
+
+  .tag {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    background:#eee;
+    font-size:12px;
+    margin-right:6px;
+  }
+
+  .info-row {
+    display:flex;
+    justify-content:space-between;
+    font-size:14px;
+    margin:4px 0;
+  }
+
+  button { cursor:pointer; }
+
+  /* 🔥 MODO CELULAR */
+  @media (max-width:900px){
+    #map {
+      right:0;                /* El mapa ocupa todo el ancho */
+      top:90px;               /* Más espacio para que entren filtros */
     }
-  </style>
+
+    header {
+      right:0;                /* Ya no deja espacio para panel */
+      height:auto;
+      padding:10px;
+      flex-wrap: wrap;        /* Filtros en varias líneas */
+    }
+
+    .panel {
+      position:fixed;
+      bottom:0;
+      top:auto;
+      right:0;
+      width:100%;
+      height:40%;             /* Ficha ocupa parte inferior */
+      border-left:none;
+      border-top:2px solid #ddd;
+      background:white;
+    }
+  }
+
+  /* Opcional: mejora para pantallas muy chicas (<480px) */
+  @media (max-width:480px){
+    #map { top:100px; }
+    .panel { height:45%; }
+  }
+</style>
+
 </head>
 <body>
 
